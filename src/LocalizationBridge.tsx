@@ -27,6 +27,7 @@ const exact:Record<string,TranslationKey>={
 };
 
 const originals=new WeakMap<Text,string>();
+const rendered=new WeakMap<Text,string>();
 
 function translateDynamic(text:string,language:'en'|'hi'|'mr'){
  let match=text.match(/^(\d+) CASES$/);
@@ -36,7 +37,15 @@ function translateDynamic(text:string,language:'en'|'hi'|'mr'){
  match=text.match(/^STEP (\d+) OF 3$/);
  if(match)return translate(language,'stepOf',{step:match[1]});
  match=text.match(/^Budget used (\d+)\/(\d+)$/);
- if(match)return translate(language,'budgetUsed',{spent:match[1],budget:match[2]});
+ if(match){
+  const spent=Number(match[1]);
+  const budget=Number(match[2]);
+  const remaining=Math.max(0,budget-spent);
+  const used=translate(language,'budgetUsed',{spent:match[1],budget:match[2]});
+  if(language==='hi')return `${used} · ${remaining} बाकी`;
+  if(language==='mr')return `${used} · ${remaining} शिल्लक`;
+  return `${used} · ${remaining} remaining`;
+ }
  match=text.match(/^(\d+) budget points$/);
  if(match)return `${match[1]} ${translate(language,'budgetPoints')}`;
  match=text.match(/^CASE RESULT · (.+)$/);
@@ -47,7 +56,13 @@ function translateDynamic(text:string,language:'en'|'hi'|'mr'){
 }
 
 function localizeNode(node:Text,language:'en'|'hi'|'mr'){
- if(!originals.has(node))originals.set(node,node.data);
+ const lastRendered=rendered.get(node);
+ const previousOriginal=originals.get(node);
+ // React can reuse the same Text node for changing values (for example budget 0/60 -> 20/60).
+ // If the DOM changed to something other than our last translated value, refresh the source text.
+ if(!previousOriginal || (lastRendered!==undefined && node.data!==lastRendered && node.data!==previousOriginal)){
+  originals.set(node,node.data);
+ }
  const original=originals.get(node)??node.data;
  const leading=original.match(/^\s*/)?.[0]??'';
  const trailing=original.match(/\s*$/)?.[0]??'';
@@ -60,6 +75,7 @@ function localizeNode(node:Text,language:'en'|'hi'|'mr'){
    ??translateBeginnerCase(language,clean)
    ??translateRemainingCaseText(clean,language);
  const next=translated?leading+translated+trailing:original;
+ rendered.set(node,next);
  if(node.data!==next)node.data=next;
 }
 
