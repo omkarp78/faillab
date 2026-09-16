@@ -63,12 +63,12 @@ const languageNames:Record<AppLanguage,string>={en:'English',hi:'हिन्द
 export function PreferencesBar(){
  const {language,theme,setLanguage,toggleTheme}=usePreferences();
  return <aside className="preferences-bar" aria-label="Display and language settings">
-  <div className="preferences-language" title="Language">
-   <Languages size={15}/>
-   {(['en','hi','mr'] as AppLanguage[]).map(code=><button key={code} className={language===code?'active':''} onClick={()=>setLanguage(code)} aria-label={languageNames[code]} title={languageNames[code]}>{languageLabels[code]}</button>)}
+  <div className="preferences-language" title="Language" role="group" aria-label="Language">
+   <Languages size={15} aria-hidden="true"/>
+   {(['en','hi','mr'] as AppLanguage[]).map(code=><button key={code} type="button" className={language===code?'active':''} onClick={()=>setLanguage(code)} aria-label={languageNames[code]} aria-pressed={language===code} title={languageNames[code]}>{languageLabels[code]}</button>)}
   </div>
-  <button className="theme-toggle" onClick={toggleTheme} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'} title={theme==='dark'?'Light mode':'Dark mode'}>
-   {theme==='dark'?<Sun size={16}/>:<Moon size={16}/>}<span>{theme==='dark'?'Light':'Dark'}</span>
+  <button type="button" className="theme-toggle" onClick={toggleTheme} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'} aria-pressed={theme==='light'} title={theme==='dark'?'Light mode':'Dark mode'}>
+   {theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span>
   </button>
  </aside>;
 }
