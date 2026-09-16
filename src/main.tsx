@@ -5,6 +5,7 @@ import {LocalizationBridge} from './LocalizationBridge';
 import {PreferencesBar,PreferencesProvider} from './preferences';
 import './styles.css';
 import './preferences.css';
+import './themePalette.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
  <React.StrictMode>
