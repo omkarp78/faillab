@@ -15,7 +15,8 @@ const localization=read('src/LocalizationBridge.tsx');
 
 expect(pkg.scripts?.['test:phase6'],'Phase 6 validation script is missing');
 expect(pkg.scripts?.['test:phase7'],'Phase 7 validation script is missing');
-expect(pkg.scripts?.build?.includes('test:phase7'),'production build must run Phase 7 validation');
+expect(pkg.scripts?.['test:launch']?.includes('test:phase7'),'launch suite must include Phase 7 validation');
+expect(pkg.scripts?.build?.includes('test:launch'),'production build must run the launch validation suite');
 expect(main.includes('<ErrorBoundary>'),'app is not wrapped in the production error boundary');
 expect(errorBoundary.includes('componentDidCatch'),'error boundary does not capture render failures');
 expect(errorBoundary.includes('Reload FailLab'),'recovery action is missing');
