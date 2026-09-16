@@ -1,22 +1,30 @@
 import {useEffect,useMemo,useState,type ReactNode} from 'react';
 import {ArrowRight,Beaker,Check,ChevronLeft,ClipboardCheck,Clock3,Eye,FlaskConical,Trophy,Flame,Target,ChartNoAxesCombined,Cloud,LogIn,LogOut} from 'lucide-react';
 import type {User} from '@supabase/supabase-js';
-import {cases,scoreDiagnosis,type InvestigationScore} from './case';
+import {cases as baseCases,scoreDiagnosis,type InvestigationScore} from './case';
+import {developerCases} from './developerCases';
 import {caseProgress,loadProgress,mergeProgress,rankFor,recordAttempt,saveProgress,solvedCount,type AttemptUpdate,type Progress} from './progress';
 import {getCurrentUser,onAuthChange,pullProgress,pushProgress,signInWithGoogle,signOut} from './cloud';
 import {cloudEnabled} from './supabase';
 
+const cases=[...baseCases,...developerCases];
 type Screen='home'|'brief'|'investigate'|'report';
 type GuideStep=1|2|3;
 type BranchFilter='All'|'Civil Engineering'|'Mechanical Engineering'|'Electrical / E&TC'|'Computer / IT';
+type DeveloperTrack='All'|'Web Development'|'Backend'|'Languages';
 
-const branchTabs:{label:string,value:BranchFilter}[]=[
- {label:'All',value:'All'},
- {label:'Civil',value:'Civil Engineering'},
- {label:'Mechanical',value:'Mechanical Engineering'},
- {label:'Electrical',value:'Electrical / E&TC'},
- {label:'Computer / IT',value:'Computer / IT'}
+const branchTabs:{label:string;value:BranchFilter}[]=[
+ {label:'All',value:'All'},{label:'Civil',value:'Civil Engineering'},{label:'Mechanical',value:'Mechanical Engineering'},{label:'Electrical',value:'Electrical / E&TC'},{label:'Computer / IT',value:'Computer / IT'}
 ];
+const developerTabs:{label:string;value:DeveloperTrack}[]=[
+ {label:'All Dev',value:'All'},{label:'Web Dev',value:'Web Development'},{label:'Backend',value:'Backend'},{label:'Languages',value:'Languages'}
+];
+
+function developerTrack(code:string):DeveloperTrack{
+ if(['T-001','T-002','T-007','T-008'].includes(code))return'Backend';
+ if(['T-003','T-009','T-010'].includes(code))return'Languages';
+ return'Web Development';
+}
 
 export default function App(){
  const [screen,setScreen]=useState<Screen>('home');
@@ -28,6 +36,7 @@ export default function App(){
  const [attemptUpdate,setAttemptUpdate]=useState<AttemptUpdate|null>(null);
  const [guideStep,setGuideStep]=useState<GuideStep>(1);
  const [activeBranch,setActiveBranch]=useState<BranchFilter>('All');
+ const [activeDeveloperTrack,setActiveDeveloperTrack]=useState<DeveloperTrack>('All');
  const [user,setUser]=useState<User|null>(null);
  const [syncing,setSyncing]=useState(false);
  const c=cases[caseIndex];
@@ -35,7 +44,8 @@ export default function App(){
  const result:InvestigationScore|null=screen==='report'?scoreDiagnosis(c,hyp,reviewed,tests):null;
  const cp=caseProgress(progress,c.code);
  const reviewedAvailable=c.evidence.filter(e=>e.initial).every(e=>reviewed.includes(e.id));
- const visibleCases=activeBranch==='All'?cases:cases.filter(x=>x.branch===activeBranch);
+ const branchCases=activeBranch==='All'?cases:cases.filter(x=>x.branch===activeBranch);
+ const visibleCases=activeBranch==='Computer / IT'&&activeDeveloperTrack!=='All'?branchCases.filter(x=>developerTrack(x.code)===activeDeveloperTrack):branchCases;
 
  useEffect(()=>{
   if(!cloudEnabled)return;
@@ -48,8 +58,7 @@ export default function App(){
    const local=loadProgress();
    const remote=await pullProgress(nextUser.id);
    const merged=remote?mergeProgress(local,remote):local;
-   saveProgress(merged);
-   setProgress(merged);
+   saveProgress(merged);setProgress(merged);
    await pushProgress(nextUser,merged);
    if(active)setSyncing(false);
   };
@@ -64,9 +73,17 @@ export default function App(){
  const submit=()=>{const r=scoreDiagnosis(c,hyp,reviewed,tests);const update=recordAttempt(c.code,r.total,r.baseIq,r.correct);setProgress(update.progress);setAttemptUpdate(update);setScreen('report');if(user){setSyncing(true);pushProgress(user,update.progress).finally(()=>setSyncing(false))}};
  const reset=()=>openCase(caseIndex);
 
- if(screen==='home')return <main className="shell"><Header/><section className="dashboard"><div><div className="eyebrow">ENGINEERING FAILURE GAME</div><h1>Something failed.<br/><em>Can you find out why?</em></h1><p>Read the problem, inspect clues, run a few tests and choose the most likely cause. You do not need to be an expert — the game teaches you as you play.</p></div><div className="profile-card"><small>YOUR PROGRESS</small><strong>{rankFor(progress.iq)}</strong><div className="iq"><b>{progress.iq}</b><span>ENGINEERING IQ</span></div><div className="profile-stats"><span><Trophy/> {progress.bestScore||'—'}<small>BEST SCORE</small></span><span><Flame/> {progress.streak}<small>DAY STREAK</small></span><span><Target/> {solvedCount(progress)}/{cases.length}<small>CASES SOLVED</small></span></div><div style={{borderTop:'1px solid #2d342f',marginTop:16,paddingTop:14}}>{cloudEnabled?(user?<><div style={{display:'flex',alignItems:'center',gap:8,color:'#9bc3a0',fontSize:12}}><Cloud size={15}/><span>{syncing?'Syncing progress…':'Cloud progress synced'}</span></div><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,marginTop:9}}><small style={{color:'#7f8880',overflow:'hidden',textOverflow:'ellipsis'}}>{user.email}</small><button className="ghost" style={{padding:4}} onClick={()=>signOut()}><LogOut size={14}/> Sign out</button></div></>:<button className="primary" style={{width:'100%'}} onClick={()=>signInWithGoogle()}><LogIn size={16}/> Sign in with Google</button>):<div style={{display:'flex',alignItems:'center',gap:8,color:'#7f8880',fontSize:11}}><Cloud size={14}/><span>Guest mode · progress saved on this device</span></div>}</div></div></section><section className="section-head"><div><span>CHOOSE A CASE</span><h2>Pick your engineering branch</h2></div><small>{visibleCases.length} CASES</small></section><div style={{display:'flex',gap:8,overflowX:'auto',padding:'0 0 18px',WebkitOverflowScrolling:'touch',scrollbarWidth:'none'}}>{branchTabs.map(tab=>{const count=tab.value==='All'?cases.length:cases.filter(x=>x.branch===tab.value).length;const active=activeBranch===tab.value;return <button key={tab.value} onClick={()=>setActiveBranch(tab.value)} style={{flex:'0 0 auto',minHeight:42,padding:'9px 14px',borderRadius:999,border:active?'1px solid #dba64b':'1px solid #394039',background:active?'#dba64b':'#171b18',color:active?'#171812':'#c1c7c2',font:'600 11px Inter, sans-serif',cursor:'pointer'}}>{tab.label} <span style={{opacity:.7,marginLeft:5}}>{count}</span></button>})}</div><section className="department-grid">{visibleCases.map(x=>{const i=cases.findIndex(item=>item.code===x.code);const p=caseProgress(progress,x.code);const status=p.solved?'SOLVED':p.attempts?'IN PROGRESS':'NEW';return <article className={'case-card dept-card '+(p.solved?'solved':'')} key={x.code}><div><div className="case-top"><span className="case-code">{x.code} · {shortBranch(x.branch).toUpperCase()}</span><span className={'status '+status.toLowerCase().replace(' ','-')}>{status}</span></div><h2>{x.title}</h2><p>{shortBrief(x.briefing)}</p><div className="case-meta"><span>{x.difficulty.toUpperCase()}</span><span>ABOUT 5–8 MIN</span>{p.bestScore>0&&<span>BEST {p.bestScore}</span>}</div></div><button className="primary" onClick={()=>openCase(i)}>{p.attempts?'Play again':'Start case'} <ArrowRight size={17}/></button></article>})}</section></main>;
+ if(screen==='home')return <main className="shell"><Header/>
+  <section className="dashboard"><div><div className="eyebrow">ENGINEERING FAILURE GAME</div><h1>Something failed.<br/><em>Can you find out why?</em></h1><p>Read the problem, inspect clues, run a few tests and choose the most likely cause. You do not need to be an expert — the game teaches you as you play.</p></div>
+  <div className="profile-card"><small>YOUR PROGRESS</small><strong>{rankFor(progress.iq)}</strong><div className="iq"><b>{progress.iq}</b><span>ENGINEERING IQ</span></div><div className="profile-stats"><span><Trophy/> {progress.bestScore||'—'}<small>BEST SCORE</small></span><span><Flame/> {progress.streak}<small>DAY STREAK</small></span><span><Target/> {solvedCount(progress)}/{cases.length}<small>CASES SOLVED</small></span></div>
+  <div style={{borderTop:'1px solid #2d342f',marginTop:16,paddingTop:14}}>{cloudEnabled?(user?<><div style={{display:'flex',alignItems:'center',gap:8,color:'#9bc3a0',fontSize:12}}><Cloud size={15}/><span>{syncing?'Syncing progress…':'Cloud progress synced'}</span></div><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,marginTop:9}}><small style={{color:'#7f8880',overflow:'hidden',textOverflow:'ellipsis'}}>{user.email}</small><button className="ghost" style={{padding:4}} onClick={()=>signOut()}><LogOut size={14}/> Sign out</button></div></>:<button className="primary" style={{width:'100%'}} onClick={()=>signInWithGoogle()}><LogIn size={16}/> Sign in with Google</button>):<div style={{display:'flex',alignItems:'center',gap:8,color:'#7f8880',fontSize:11}}><Cloud size={14}/><span>Guest mode · progress saved on this device</span></div>}</div></div></section>
+  <section className="section-head"><div><span>CHOOSE A CASE</span><h2>Pick your engineering branch</h2></div><small>{visibleCases.length} CASES</small></section>
+  <div style={{display:'flex',gap:8,overflowX:'auto',padding:'0 0 12px',WebkitOverflowScrolling:'touch',scrollbarWidth:'none'}}>{branchTabs.map(tab=>{const count=tab.value==='All'?cases.length:cases.filter(x=>x.branch===tab.value).length;const active=activeBranch===tab.value;return <button key={tab.value} onClick={()=>{setActiveBranch(tab.value);if(tab.value!=='Computer / IT')setActiveDeveloperTrack('All')}} style={pill(active)}>{tab.label}<span style={{opacity:.7,marginLeft:5}}>{count}</span></button>})}</div>
+  {activeBranch==='Computer / IT'&&<div style={{display:'flex',alignItems:'center',gap:8,overflowX:'auto',padding:'0 0 20px',WebkitOverflowScrolling:'touch',scrollbarWidth:'none'}}><span style={{flex:'0 0 auto',fontSize:10,letterSpacing:'1.4px',color:'#737d75',marginRight:4}}>DEVELOPER TRACK</span>{developerTabs.map(tab=>{const count=tab.value==='All'?branchCases.length:branchCases.filter(x=>developerTrack(x.code)===tab.value).length;return <button key={tab.value} onClick={()=>setActiveDeveloperTrack(tab.value)} style={subPill(activeDeveloperTrack===tab.value)}>{tab.label}<span style={{opacity:.65,marginLeft:5}}>{count}</span></button>})}</div>}
+  <section className="department-grid">{visibleCases.map(x=>{const i=cases.findIndex(item=>item.code===x.code);const p=caseProgress(progress,x.code);const status=p.solved?'SOLVED':p.attempts?'IN PROGRESS':'NEW';return <article className={'case-card dept-card '+(p.solved?'solved':'')} key={x.code}><div><div className="case-top"><span className="case-code">{x.code} · {x.branch==='Computer / IT'?developerTrack(x.code).toUpperCase():shortBranch(x.branch).toUpperCase()}</span><span className={'status '+status.toLowerCase().replace(' ','-')}>{status}</span></div><h2>{x.title}</h2><p>{shortBrief(x.briefing)}</p><div className="case-meta"><span>{x.difficulty.toUpperCase()}</span><span>ABOUT 5–8 MIN</span>{p.bestScore>0&&<span>BEST {p.bestScore}</span>}</div></div><button className="primary" onClick={()=>openCase(i)}>{p.attempts?'Play again':'Start case'} <ArrowRight size={17}/></button></article>})}</section>
+ </main>;
 
- if(screen==='brief')return <main className="shell"><Header/><button className="back" onClick={()=>setScreen('home')}><ChevronLeft size={16}/> Back</button><section className="brief"><div className="eyebrow">{c.branch.toUpperCase()}</div><h1>{c.title}</h1><p className="lead">{c.briefing}</p><div className="panel" style={{maxWidth:760,margin:'28px 0 18px'}}><h3><ClipboardCheck size={18}/> How to play</h3><div className="fact">1. Read the clues</div><div className="fact">2. Run useful tests using your budget</div><div className="fact">3. Pick the most likely cause</div><div className="fact">4. See why the answer is right or wrong</div></div><div className="panel objective" style={{maxWidth:760,marginBottom:18}}><h3>Your goal</h3><p>Find the most likely reason this failure happened. You have <b>{c.budget} budget points</b> for tests, so choose carefully.</p>{cp.bestScore>0&&<div className="prior-best">Previous best <b>{cp.bestScore}/100</b></div>}</div><button className="primary" onClick={()=>setScreen('investigate')}>Start investigation <ArrowRight size={18}/></button></section></main>;
+ if(screen==='brief')return <main className="shell"><Header/><button className="back" onClick={()=>setScreen('home')}><ChevronLeft size={16}/> Back</button><section className="brief"><div className="eyebrow">{c.branch.toUpperCase()}{c.branch==='Computer / IT'?` · ${developerTrack(c.code).toUpperCase()}`:''}</div><h1>{c.title}</h1><p className="lead">{c.briefing}</p><div className="panel" style={{maxWidth:760,margin:'28px 0 18px'}}><h3><ClipboardCheck size={18}/> How to play</h3><div className="fact">1. Read the clues</div><div className="fact">2. Run useful tests using your budget</div><div className="fact">3. Pick the most likely cause</div><div className="fact">4. See why the answer is right or wrong</div></div><div className="panel objective" style={{maxWidth:760,marginBottom:18}}><h3>Your goal</h3><p>Find the most likely reason this failure happened. You have <b>{c.budget} budget points</b> for tests, so choose carefully.</p>{cp.bestScore>0&&<div className="prior-best">Previous best <b>{cp.bestScore}/100</b></div>}</div><button className="primary" onClick={()=>setScreen('investigate')}>Start investigation <ArrowRight size={18}/></button></section></main>;
 
  if(screen==='report'&&result){const answer=c.hypotheses.find(x=>x.id===c.correct)!;const chosen=c.hypotheses.find(x=>x.id===hyp);return <main className="shell"><Header/><section className="report"><div className="eyebrow">CASE RESULT · {c.code}</div><div className={'verdict '+(result.correct?'good':'bad')}><span>{result.correct?'YOU FOUND THE ROOT CAUSE':'NOT QUITE'}</span><strong>{result.total}</strong><small>/ 100</small></div><h1>{result.correct?'Correct diagnosis':'Here is what the evidence shows'}</h1><p className="lead">{result.correct?c.conclusion:`You chose “${chosen?.title||'—'}”. The strongest evidence supports “${answer.title}”.`}</p><div className="score-grid five"><Score n={result.diagnosisScore} max={50} label="Correct cause"/><Score n={result.evidenceScore} max={25} label="Clues used"/><Score n={result.investigationScore} max={15} label="Tests"/><Score n={result.efficiencyScore} max={10} label="Budget"/><Score n={attemptUpdate?.iqGained||0} label="IQ gained"/></div><div className="report-grid"><div className="panel"><h3><ChartNoAxesCombined size={17}/> Why?</h3><p>{c.conclusion}</p></div><div className="panel"><h3><ClipboardCheck size={17}/> What should be done?</h3><p>{c.response}</p></div></div><div className="panel lesson"><h3><Beaker size={17}/> Main lesson</h3><p>{c.lesson}</p></div><div className="report-actions"><button className="primary" onClick={reset}>Try again</button><button className="ghost" onClick={()=>setScreen('home')}>Choose another case <ArrowRight size={16}/></button></div></section></main>}
 
@@ -77,8 +94,10 @@ export default function App(){
  </div></main>;
 }
 
+function pill(active:boolean){return{flex:'0 0 auto',minHeight:42,padding:'9px 14px',borderRadius:999,border:active?'1px solid #dba64b':'1px solid #394039',background:active?'#dba64b':'#171b18',color:active?'#171812':'#c1c7c2',font:'600 11px Inter, sans-serif',cursor:'pointer'} as const}
+function subPill(active:boolean){return{flex:'0 0 auto',minHeight:36,padding:'7px 12px',borderRadius:10,border:active?'1px solid #65796b':'1px solid #303832',background:active?'#263029':'#111512',color:active?'#d9e4dc':'#929b94',font:'600 11px Inter, sans-serif',cursor:'pointer'} as const}
 function shortBrief(text:string){return text.length>150?text.slice(0,147)+'…':text}
 function shortBranch(branch:string){if(branch==='Civil Engineering')return'Civil';if(branch==='Mechanical Engineering')return'Mechanical';if(branch==='Electrical / E&TC')return'Electrical';return'Computer / IT'}
 function Header(){return <header className="header"><div className="logo"><span>F</span><b>FAIL<span>LAB</span></b></div><div className="tag">FIND THE FAILURE · LEARN THE WHY</div></header>}
-function Title({icon,title,sub}:{icon:ReactNode,title:string,sub:string}){return <div className="title"><span>{icon}</span><div><b>{title}</b><small>{sub}</small></div></div>}
-function Score({n,max,label}:{n:number,max?:number,label:string}){return <div><strong>{n}{max&&<small>/{max}</small>}</strong><span>{label}</span></div>}
+function Title({icon,title,sub}:{icon:ReactNode;title:string;sub:string}){return <div className="title"><span>{icon}</span><div><b>{title}</b><small>{sub}</small></div></div>}
+function Score({n,max,label}:{n:number;max?:number;label:string}){return <div><strong>{n}{max&&<small>/{max}</small>}</strong><span>{label}</span></div>}
