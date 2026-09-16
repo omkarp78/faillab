@@ -1,0 +1,6 @@
+export type Progress={iq:number;completed:number;bestScore:number;streak:number;lastCompleted:string|null;attempts:number};
+const KEY='faillab-progress-v1';
+export const emptyProgress:Progress={iq:0,completed:0,bestScore:0,streak:0,lastCompleted:null,attempts:0};
+export function loadProgress():Progress{try{const raw=localStorage.getItem(KEY);return raw?{...emptyProgress,...JSON.parse(raw)}:emptyProgress}catch{return emptyProgress}}
+export function recordCompletion(score:number,iq:number):Progress{const p=loadProgress();const today=new Date().toISOString().slice(0,10);const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);const firstToday=p.lastCompleted!==today;const streak=firstToday?(p.lastCompleted===yesterday?p.streak+1:1):p.streak;const next={...p,iq:p.iq+iq,completed:firstToday?p.completed+1:p.completed,bestScore:Math.max(p.bestScore,score),streak,lastCompleted:today,attempts:p.attempts+1};localStorage.setItem(KEY,JSON.stringify(next));return next}
+export function rankFor(iq:number){if(iq>=800)return'Principal Investigator';if(iq>=500)return'Failure Analyst';if(iq>=250)return'Investigator II';if(iq>=100)return'Investigator I';return'Trainee Investigator'}
