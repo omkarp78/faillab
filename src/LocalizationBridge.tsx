@@ -2,6 +2,7 @@ import {useEffect} from 'react';
 import {translate,type TranslationKey} from './i18n';
 import {usePreferences} from './preferences';
 import {translateBeginnerCase} from './beginnerCaseTranslations';
+import {translateRemainingCaseText} from './remainingCaseTranslations';
 
 const exact:Record<string,TranslationKey>={
  'ENGINEERING FAILURE GAME':'gameEyebrow','Something failed.':'heroTitle','Can you find out why?':'heroQuestion',
@@ -53,7 +54,11 @@ function localizeNode(node:Text,language:'en'|'hi'|'mr'){
  const clean=original.trim();
  if(!clean)return;
  const key=exact[clean];
- const translated=key?translate(language,key):translateDynamic(clean,language)??translateBeginnerCase(language,clean);
+ const translated=key
+  ?translate(language,key)
+  :translateDynamic(clean,language)
+   ??translateBeginnerCase(language,clean)
+   ??translateRemainingCaseText(clean,language);
  const next=translated?leading+translated+trailing:original;
  if(node.data!==next)node.data=next;
 }
