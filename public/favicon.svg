@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="FailLab favicon">
+  <defs>
+    <linearGradient id="bg" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#111f3d"/>
+      <stop offset="1" stop-color="#07111f"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="18" y1="15" x2="50" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="hat" x1="24" y1="9" x2="42" y2="24" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#facc15"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#bg)" stroke="#1d4ed8" stroke-width="2"/>
+
+  <!-- simple engineering gear silhouette -->
+  <path fill="#174a91" d="M19 21l3-3 3 2a16 16 0 0 1 4-2l1-4h4l1 4a16 16 0 0 1 4 2l3-2 3 3-2 3a16 16 0 0 1 2 4l4 1v4l-4 1a16 16 0 0 1-2 4l2 3-3 3-3-2a16 16 0 0 1-4 2l-1 4h-4l-1-4a16 16 0 0 1-4-2l-3 2-3-3 2-3a16 16 0 0 1-2-4l-4-1v-4l4-1a16 16 0 0 1 2-4z" opacity=".9"/>
+
+  <!-- hard hat -->
+  <path fill="url(#hat)" d="M20 19c1-7 6-11 13-11s12 4 13 11l3 1v3H17v-3l3-1z"/>
+  <path fill="#fbbf24" d="M15 22h36c0 3-2 4-5 4H20c-3 0-5-1-5-4z"/>
+  <path d="M33 9v9" stroke="#fb923c" stroke-width="2.6" stroke-linecap="round"/>
+
+  <!-- F -->
+  <path fill="#fff" d="M20 25h22v7H29v5h11v7H29v12h-9V25z"/>
+
+  <!-- magnifier -->
+  <circle cx="44" cy="43" r="8" fill="#091629" stroke="url(#blue)" stroke-width="4"/>
+  <path d="M49.5 48.5L56 55" stroke="url(#blue)" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="44" cy="43" r="2.3" fill="#38bdf8"/>
+</svg>
