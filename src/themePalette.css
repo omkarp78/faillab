@@ -1,0 +1,78 @@
+:root{
+ --bg:#0f172a;
+ --card:#172033;
+ --card2:#1d2940;
+ --line:#2f3b52;
+ --muted:#94a3b8;
+ --amber:#38bdf8;
+ --green:#34d399;
+ --red:#fb7185;
+ color:#e6edf7;
+ background:var(--bg);
+}
+
+body{background:var(--bg);color:#e6edf7}
+.workspace{background:#0b1323}
+.work-head{background:rgba(11,19,35,.96)}
+.dashboard>div>p,.lead{color:#b8c4d6}
+.profile-card,.panel,.case-card{background:#172033}
+.profile-card{border-top-color:#38bdf8}
+.iq span,.profile-stats small,.case-card p,.objective p,.report .panel p,.evidence p,.hyp p,.observation p,.warning{color:#9eacc0}
+.case-meta span,.status{border-color:#3a4862;color:#b7c2d3}
+.status.solved{color:#86efac;border-color:#2f6f55}
+.status.in-progress{color:#93c5fd;border-color:#355d8a}
+.case-card.solved{border-color:#2f6f55}
+.primary,.submit{background:linear-gradient(135deg,#38bdf8,#2dd4bf);color:#07111f;box-shadow:0 8px 24px rgba(45,212,191,.14)}
+.primary:hover,.submit:hover{filter:brightness(1.05)}
+.ghost,.back,.icon,.dashboard h1 em,.logo>span,.logo b span,.iq b,.budget strong,.title>span,.observation span,.score-grid strong,.learning-panel b,.mastery-line svg,.mastery-line b,.prior-best b{color:#38bdf8}
+.logo>span{border-color:#38bdf8}
+.objective,.observation,.lesson{border-color:#38bdf8}
+.phase-note span{color:#38bdf8;border-color:#456079}
+.evidence,.hyp{background:#141e31;border-color:#2c3a52;color:#e3eaf5}
+.evidence.seen{border-color:#2f6f6a;background:#142c2d}
+.test,.score-grid>div,.learning-panel>div{background:#141e31}
+.test button{background:#1c2a42;border-color:#40516e;color:#d8e2f0}
+.test-result{color:#86d9c7!important}
+.hyp.selected{border-color:#38bdf8;background:#10283a;box-shadow:0 0 0 1px rgba(56,189,248,.08) inset}
+.radio{border-color:#61738d}.radio i{background:#38bdf8}
+.notes textarea{background:#10192a;color:#e8eef8}
+.verdict.good{color:#86efac;border-color:#34d399}
+.verdict.bad{color:#fda4af;border-color:#fb7185}
+
+html[data-theme='light']{
+ --bg:#f5f8fc;
+ --card:#ffffff;
+ --card2:#edf4fb;
+ --line:#d6e0ec;
+ --muted:#64748b;
+ --amber:#0284c7;
+ --green:#059669;
+ --red:#e11d48;
+ color:#142033;
+ background:#f5f8fc;
+}
+html[data-theme='light'] body{background:#f5f8fc;color:#142033}
+html[data-theme='light'] .workspace{background:#eef4fa}
+html[data-theme='light'] .work-head{background:rgba(245,248,252,.96)}
+html[data-theme='light'] .profile-card,
+html[data-theme='light'] .panel,
+html[data-theme='light'] .case-card{background:#fff}
+html[data-theme='light'] .dashboard>div>p,
+html[data-theme='light'] .lead,
+html[data-theme='light'] .case-card p,
+html[data-theme='light'] .objective p,
+html[data-theme='light'] .report .panel p,
+html[data-theme='light'] .evidence p,
+html[data-theme='light'] .hyp p,
+html[data-theme='light'] .observation p{color:#5d6b7d}
+html[data-theme='light'] .evidence,
+html[data-theme='light'] .hyp,
+html[data-theme='light'] .test,
+html[data-theme='light'] .score-grid>div,
+html[data-theme='light'] .learning-panel>div{background:#f8fbfe;color:#1e293b;border-color:#d6e0ec}
+html[data-theme='light'] .evidence.seen{background:#ecfdf5;border-color:#5cbf9f}
+html[data-theme='light'] .hyp.selected{background:#eaf6ff;border-color:#0284c7}
+html[data-theme='light'] .test button{background:#eef5fb;border-color:#c8d7e7;color:#23405f}
+html[data-theme='light'] .notes textarea{background:#fff;color:#1e293b}
+html[data-theme='light'] .primary,
+html[data-theme='light'] .submit{background:linear-gradient(135deg,#0ea5e9,#14b8a6);color:white}
