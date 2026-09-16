@@ -5,6 +5,15 @@ import {caseProgress,loadProgress,rankFor,recordAttempt,solvedCount,type Attempt
 
 type Screen='home'|'brief'|'investigate'|'report';
 type GuideStep=1|2|3;
+type BranchFilter='All'|'Civil Engineering'|'Mechanical Engineering'|'Electrical / E&TC'|'Computer / IT';
+
+const branchTabs:{label:string,value:BranchFilter}[]=[
+ {label:'All',value:'All'},
+ {label:'Civil',value:'Civil Engineering'},
+ {label:'Mechanical',value:'Mechanical Engineering'},
+ {label:'Electrical',value:'Electrical / E&TC'},
+ {label:'Computer / IT',value:'Computer / IT'}
+];
 
 export default function App(){
  const [screen,setScreen]=useState<Screen>('home');
@@ -15,12 +24,14 @@ export default function App(){
  const [progress,setProgress]=useState<Progress>(()=>loadProgress());
  const [attemptUpdate,setAttemptUpdate]=useState<AttemptUpdate|null>(null);
  const [guideStep,setGuideStep]=useState<GuideStep>(1);
+ const [activeBranch,setActiveBranch]=useState<BranchFilter>('All');
  const c=cases[caseIndex];
  const spent=useMemo(()=>c.tests.filter(t=>tests.includes(t.id)).reduce((a,t)=>a+t.cost,0),[c,tests]);
  const unlocked=new Set([...c.evidence.filter(e=>e.initial).map(e=>e.id),...c.tests.filter(t=>tests.includes(t.id)).flatMap(t=>t.unlocks||[])]);
  const result:InvestigationScore|null=screen==='report'?scoreDiagnosis(c,hyp,reviewed,tests):null;
  const cp=caseProgress(progress,c.code);
  const reviewedAvailable=c.evidence.filter(e=>e.initial).every(e=>reviewed.includes(e.id));
+ const visibleCases=activeBranch==='All'?cases:cases.filter(x=>x.branch===activeBranch);
 
  const openCase=(i:number)=>{setCaseIndex(i);setReviewed([]);setTests([]);setHyp('');setAttemptUpdate(null);setGuideStep(1);setScreen('brief')};
  const review=(id:string)=>setReviewed(x=>x.includes(id)?x:[...x,id]);
@@ -28,7 +39,7 @@ export default function App(){
  const submit=()=>{const r=scoreDiagnosis(c,hyp,reviewed,tests);const update=recordAttempt(c.code,r.total,r.baseIq,r.correct);setProgress(update.progress);setAttemptUpdate(update);setScreen('report')};
  const reset=()=>openCase(caseIndex);
 
- if(screen==='home')return <main className="shell"><Header/><section className="dashboard"><div><div className="eyebrow">ENGINEERING FAILURE GAME</div><h1>Something failed.<br/><em>Can you find out why?</em></h1><p>Read the problem, inspect clues, run a few tests and choose the most likely cause. You do not need to be an expert — the game teaches you as you play.</p></div><div className="profile-card"><small>YOUR PROGRESS</small><strong>{rankFor(progress.iq)}</strong><div className="iq"><b>{progress.iq}</b><span>ENGINEERING IQ</span></div><div className="profile-stats"><span><Trophy/> {progress.bestScore||'—'}<small>BEST SCORE</small></span><span><Flame/> {progress.streak}<small>DAY STREAK</small></span><span><Target/> {solvedCount(progress)}/{cases.length}<small>CASES SOLVED</small></span></div></div></section><section className="section-head"><div><span>CHOOSE A CASE</span><h2>Start with any failure</h2></div></section><section className="department-grid">{cases.map((x,i)=>{const p=caseProgress(progress,x.code);const status=p.solved?'SOLVED':p.attempts?'IN PROGRESS':'NEW';return <article className={'case-card dept-card '+(p.solved?'solved':'')} key={x.code}><div><div className="case-top"><span className="case-code">{x.branch.toUpperCase()}</span><span className={'status '+status.toLowerCase().replace(' ','-')}>{status}</span></div><h2>{x.title}</h2><p>{shortBrief(x.briefing)}</p><div className="case-meta"><span>{x.difficulty.toUpperCase()}</span><span>ABOUT 5–8 MIN</span>{p.bestScore>0&&<span>BEST {p.bestScore}</span>}</div></div><button className="primary" onClick={()=>openCase(i)}>{p.attempts?'Play again':'Start case'} <ArrowRight size={17}/></button></article>})}</section></main>;
+ if(screen==='home')return <main className="shell"><Header/><section className="dashboard"><div><div className="eyebrow">ENGINEERING FAILURE GAME</div><h1>Something failed.<br/><em>Can you find out why?</em></h1><p>Read the problem, inspect clues, run a few tests and choose the most likely cause. You do not need to be an expert — the game teaches you as you play.</p></div><div className="profile-card"><small>YOUR PROGRESS</small><strong>{rankFor(progress.iq)}</strong><div className="iq"><b>{progress.iq}</b><span>ENGINEERING IQ</span></div><div className="profile-stats"><span><Trophy/> {progress.bestScore||'—'}<small>BEST SCORE</small></span><span><Flame/> {progress.streak}<small>DAY STREAK</small></span><span><Target/> {solvedCount(progress)}/{cases.length}<small>CASES SOLVED</small></span></div></div></section><section className="section-head"><div><span>CHOOSE A CASE</span><h2>Pick your engineering branch</h2></div><small>{visibleCases.length} CASES</small></section><div style={{display:'flex',gap:8,overflowX:'auto',padding:'0 0 18px',WebkitOverflowScrolling:'touch',scrollbarWidth:'none'}}>{branchTabs.map(tab=>{const count=tab.value==='All'?cases.length:cases.filter(x=>x.branch===tab.value).length;const active=activeBranch===tab.value;return <button key={tab.value} onClick={()=>setActiveBranch(tab.value)} style={{flex:'0 0 auto',minHeight:42,padding:'9px 14px',borderRadius:999,border:active?'1px solid #dba64b':'1px solid #394039',background:active?'#dba64b':'#171b18',color:active?'#171812':'#c1c7c2',font:'600 11px Inter, sans-serif',cursor:'pointer'}}>{tab.label} <span style={{opacity:.7,marginLeft:5}}>{count}</span></button>})}</div><section className="department-grid">{visibleCases.map(x=>{const i=cases.findIndex(c=>c.code===x.code);const p=caseProgress(progress,x.code);const status=p.solved?'SOLVED':p.attempts?'IN PROGRESS':'NEW';return <article className={'case-card dept-card '+(p.solved?'solved':'')} key={x.code}><div><div className="case-top"><span className="case-code">{x.code} · {shortBranch(x.branch).toUpperCase()}</span><span className={'status '+status.toLowerCase().replace(' ','-')}>{status}</span></div><h2>{x.title}</h2><p>{shortBrief(x.briefing)}</p><div className="case-meta"><span>{x.difficulty.toUpperCase()}</span><span>ABOUT 5–8 MIN</span>{p.bestScore>0&&<span>BEST {p.bestScore}</span>}</div></div><button className="primary" onClick={()=>openCase(i)}>{p.attempts?'Play again':'Start case'} <ArrowRight size={17}/></button></article>})}</section></main>;
 
  if(screen==='brief')return <main className="shell"><Header/><button className="back" onClick={()=>setScreen('home')}><ChevronLeft size={16}/> Back</button><section className="brief"><div className="eyebrow">{c.branch.toUpperCase()}</div><h1>{c.title}</h1><p className="lead">{c.briefing}</p><div className="panel" style={{maxWidth:760,margin:'28px 0 18px'}}><h3><ClipboardCheck size={18}/> How to play</h3><div className="fact">1. Read the clues</div><div className="fact">2. Run useful tests using your budget</div><div className="fact">3. Pick the most likely cause</div><div className="fact">4. See why the answer is right or wrong</div></div><div className="panel objective" style={{maxWidth:760,marginBottom:18}}><h3>Your goal</h3><p>Find the most likely reason this failure happened. You have <b>{c.budget} budget points</b> for tests, so choose carefully.</p>{cp.bestScore>0&&<div className="prior-best">Previous best <b>{cp.bestScore}/100</b></div>}</div><button className="primary" onClick={()=>setScreen('investigate')}>Start investigation <ArrowRight size={18}/></button></section></main>;
 
@@ -42,6 +53,7 @@ export default function App(){
 }
 
 function shortBrief(text:string){return text.length>150?text.slice(0,147)+'…':text}
+function shortBranch(branch:string){if(branch==='Civil Engineering')return'Civil';if(branch==='Mechanical Engineering')return'Mechanical';if(branch==='Electrical / E&TC')return'Electrical';return'Computer / IT'}
 function Header(){return <header className="header"><div className="logo"><span>F</span><b>FAIL<span>LAB</span></b></div><div className="tag">FIND THE FAILURE · LEARN THE WHY</div></header>}
 function Title({icon,title,sub}:{icon:ReactNode,title:string,sub:string}){return <div className="title"><span>{icon}</span><div><b>{title}</b><small>{sub}</small></div></div>}
 function Score({n,max,label}:{n:number,max?:number,label:string}){return <div><strong>{n}{max&&<small>/{max}</small>}</strong><span>{label}</span></div>}
